@@ -4,6 +4,9 @@ from rest_framework.response import Response
 from . import models, serializers
 from rest_framework.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 def home(request):
     return render(request, 'postit_api/index.html')
@@ -95,3 +98,17 @@ class PostLikeCreate(generics.CreateAPIView, mixins.DestroyModelMixin):
             return Response(status=status.HTTP_204_NO_CONTENT) #204 reiskia no content
         else:
             raise ValidationError(_('You do not like this post to begin with.'))
+
+
+class UserCreate(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = serializers.UserSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def delete(self, request, *args, **kwargs):
+        user = User.objects.filter(pk=request.user.pk)
+        if user.exists():
+            user.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            raise ValidationError(_('User does not exist.'))
